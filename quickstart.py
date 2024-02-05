@@ -8,8 +8,15 @@ from sqlite3 import connect
 from os import mkdir
 
 # Create Logs Directory
-mkdir("Logs")
-mkdir("BotData")
+try:
+    mkdir("Logs")
+except FileExistsError:
+    pass
+try:
+    mkdir("BotData")
+except FileExistsError:
+    pass
+
 
 # Create Database
 with connect("BotData/database.db") as conn:
