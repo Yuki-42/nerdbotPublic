@@ -18,6 +18,11 @@ from internals.logging_ import createLogger, SuppressedLoggerAdapter
 
 # Load .env
 loadDotenv()
+
+# Check if the bot is in debug mode. This is mainly used by the dev for testing and can be ignored
+if "DEBUG" not in environ:
+    environ["DEBUG"] = "FALSE"
+
 debugMode: bool = environ.get("DEBUG").upper() == "TRUE"
 
 token: str = environ.get("TOKEN") if debugMode is False else environ.get("TESTING_TOKEN")
