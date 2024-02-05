@@ -9,6 +9,7 @@ from os import mkdir
 
 # Create Logs Directory
 mkdir("Logs")
+mkdir("BotData")
 
 # Create Database
 with connect("BotData/database.db") as conn:
