@@ -11,6 +11,7 @@ from discord import Intents, Bot, ActivityType, Game, Activity, option, Forbidde
     SlashCommandGroup
 from dotenv import load_dotenv as loadDotenv
 
+from internals import Database
 # Internal imports
 from internals.config import Config
 from internals.database import Database
@@ -37,13 +38,13 @@ if not Path("Logs").exists():
 config: Config = Config(Path("BotData/config.json"))
 logger: SuppressedLoggerAdapter = createLogger("Main", config.loggingLevel)
 
-database = Database(config=config)  # TODO: Swap over to using postgres
+database: Database = Database(config=config)  # TODO: Swap over to using postgres
 
 logger.info("Initializing bot...")
 # Set bot intents including Message intents for slash commands
 intents: Intents = Intents.all()
 
-bot = Bot(intents=intents)
+bot: Bot = Bot(intents=intents)
 
 logger.info("Bot initialized.")
 
@@ -51,24 +52,23 @@ logger.info("Bot initialized.")
 filterGroup: SlashCommandGroup = bot.create_group(name="filter", description="Commands for managing the gif filter")
 gifModerationGroup: SlashCommandGroup = bot.create_group(name="gifmoderation", description="Commands for managing gifs")
 reactionsGroup: SlashCommandGroup = bot.create_group(name="reactions", description="Commands for managing reactions")
-roleReactionGroup: SlashCommandGroup = bot.create_group(name="rolereactions",
-                                                        description="Commands for managing role reactions")
-auditGroup: SlashCommandGroup = bot.create_group(name="audit",
-                                                 description="Commands used for auditing bot values and data")
+roleReactionGroup: SlashCommandGroup = bot.create_group(name="rolereactions", description="Commands for managing role reactions")
+auditGroup: SlashCommandGroup = bot.create_group(name="audit", description="Commands used for auditing bot values and data")
 
 """
 Helper functions.
 """
 
 
-def checkForGifClassifier(message: str):
+def checkForGifClassifier(message: str) -> bool:
     """
     Checks if the message contains a gif classifier.
+
     Args:
-        message (str): The message to check.
+        message(str): The message to check
 
     Returns:
-        bool: Whether the message contains a gif classifier.
+        bool: Whether the message contains a gif classifier
     """
     logger.debug(f"Checking if message contains gif classifier message: {message}")
     logger.debug(f"gifClassifiers: {config.gifClassifiers}")
@@ -88,8 +88,9 @@ def checkForGifClassifier(message: str):
 async def pingCommand(ctx: ApplicationContext) -> None:
     """
     The ping command for the bot.
+
     Args:
-        ctx (ApplicationContext): The bot context
+        ctx(ApplicationContext): The bot context
     """
     await ctx.respond(f'Latency is {round(bot.latency * 1000)}ms')
     return
@@ -100,11 +101,12 @@ async def pingCommand(ctx: ApplicationContext) -> None:
     description="Adds an exception to the gif filter"
 )
 @option(name="link", description="The link to the gif to add", required=True)
-async def addException(ctx, link):
+async def addException(ctx: ApplicationContext, link: str) -> None:
     """
     The add exception command for the bot.
+
     Args:
-        ctx (ApplicationContext): The context of the command
+        ctx(ApplicationContext): The context of the command
         link(str): The link to the gif to add
     """
     if not database.checkUserAdmin(ctx.author):
@@ -124,11 +126,12 @@ async def addException(ctx, link):
     description="Removes an exception from the gif filter"
 )
 @option(name="link", description="The link to the gif to remove", required=True)
-async def removeException(ctx, link):
+async def removeException(ctx: ApplicationContext, link: str) -> None:
     """
     The remove exception command for the bot.
+
     Args:
-        ctx (ApplicationContext): The context of the command
+        ctx(ApplicationContext): The context of the command
         link(str): The link to the gif to remove
     """
     if not database.checkUserAdmin(ctx.author):
@@ -147,9 +150,10 @@ async def removeException(ctx, link):
     name="togglefilter",
     description="Toggles the gif filter"
 )
-async def toggleFilter(ctx):
+async def toggleFilter(ctx: ApplicationContext) -> None:
     """
     The toggle filter command for the bot.
+
     Args:
         ctx (ApplicationContext): The context of the command
     """
@@ -167,12 +171,12 @@ async def toggleFilter(ctx):
 )
 @option(name="link", description="The link to the gif to ban", required=True)
 @option(name="reason", description="The reason for the ban", required=False)
-async def banGif(ctx, link: str, reason: str):
+async def banGif(ctx: ApplicationContext, link: str, reason: str) -> None:
     """
     The ban gif command for the bot.
 
     Args:
-        ctx (ApplicationContext): The context of the command
+        ctx(ApplicationContext): The context of the command
         link(str): The link to the gif to ban
         reason(str): The reason for the ban
     """
@@ -196,9 +200,10 @@ async def banGif(ctx, link: str, reason: str):
     description="Unbans a gif"
 )
 @option(name="link", description="The link to the gif to unban", required=True)
-async def unbanGif(ctx, link: str):
+async def unbanGif(ctx: ApplicationContext, link: str) -> None:
     """
     The unban gif command for the bot.
+
     Args:
         ctx (ApplicationContext): The context of the command
         link(str): The link to the gif to unban
@@ -222,7 +227,7 @@ async def unbanGif(ctx, link: str):
 @option(name="type", description="The type of status to set", required=True,
         choices=["playing", "watching", "listening", "streaming"])
 @option(name="status", description="The status to set", required=True)
-async def setStatus(ctx, status: str, type: str):
+async def setStatus(ctx: ApplicationContext, status: str, type: str) -> None:
     """
     The set status command for the bot.
     Args:
