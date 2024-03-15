@@ -38,7 +38,7 @@ class Database:
     """
 
     @property
-    def users(self) -> list[tuple[int, str, bool, int, bool, datetime]]:
+    def users(self) -> list[tuple[int, str, bool, int, int, bool, datetime]]:
         """
         Gets the users from the database.
 
@@ -373,6 +373,20 @@ class Database:
                        "(SELECT messages_sent FROM users WHERE id=?)", (uid,))
         return cursor.fetchone()[0] + 1
 
+    def getMessagesDeleted(self, uid: int) -> int:
+        """  # TODO: Make all of these server specific (so that it only counts for users that are in the current server)
+        Gets the number of messages deleted by a user.
+
+        Args:
+            uid (int): The user id.
+
+        Returns:
+            int: The number of messages deleted.
+        """
+        cursor: Cursor = self.connection.cursor()
+        cursor.execute("SELECT messages_deleted FROM users WHERE id=?", (uid,))
+        return cursor.fetchone()[0]
+
     def getTopMessagesSent(self, limit: int) -> list:
         """
         Gets the top users based on the number of messages sent.
@@ -387,3 +401,34 @@ class Database:
         cursor.execute("SELECT id, username, messages_sent FROM users ORDER BY messages_sent DESC LIMIT ?",
                        (limit,))
         return cursor.fetchall()
+
+    def getTopMessagesDeleted(self, limit: int) -> list:
+        """
+        Gets the top users based on the number of messages deleted.
+
+        Args:
+            limit (int): The number of users to get.
+
+        Returns:
+            list: The top users.
+        """
+        cursor: Cursor = self.connection.cursor()
+        cursor.execute("SELECT id, username, messages_deleted FROM users ORDER BY messages_deleted DESC LIMIT ?",
+                       (limit,))
+
+        return cursor.fetchall()
+
+    def getMessagesDeletedRank(self, uid: int) -> int:
+        """
+        Gets the rank of a user based on the number of messages deleted.
+
+        Args:
+            uid (int): The user id.
+
+        Returns:
+            int: The number of messages deleted.
+        """
+        cursor: Cursor = self.connection.cursor()
+        cursor.execute("SELECT COUNT(*) FROM users WHERE messages_deleted > "
+                       "(SELECT messages_deleted FROM users WHERE id=?)", (uid,))
+        return cursor.fetchone()[0] + 1
