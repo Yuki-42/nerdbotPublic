@@ -11,7 +11,6 @@ from discord import Intents, Bot, ActivityType, Game, Activity, option, Forbidde
     SlashCommandGroup
 from dotenv import load_dotenv as loadDotenv
 
-from internals import Database
 # Internal imports
 from internals.config import Config
 from internals.database import Database
@@ -19,11 +18,6 @@ from internals.logging_ import createLogger, SuppressedLoggerAdapter
 
 # Load .env
 loadDotenv()
-
-# Check if the bot is in debug mode. This is mainly used by the dev for testing and can be ignored
-if "DEBUG" not in environ:
-    environ["DEBUG"] = "FALSE"
-
 debugMode: bool = environ.get("DEBUG").upper() == "TRUE"
 
 token: str = environ.get("TOKEN") if debugMode is False else environ.get("TESTING_TOKEN")
@@ -335,51 +329,72 @@ async def listReactions(ctx, user: User):
     description="Gets the message count for a user"
 )
 @option(name="user", description="The user to get the message count for", required=True)
-async def getMessageCount(ctx, user: User):
+@option(name="type", description="The type of message count to get", choices=["sent", "deleted"])
+async def getMessageCount(ctx, user: User, type: str = "sent"):
     """
     The get message count command for the bot.
 
     Args:
         ctx (ApplicationContext): The context of the command
         user(User): The user to get the message count for
+        type(str): The type of message count to get
+            "sent": The number of messages sent by the user
+            "deleted": The number of messages deleted by the user
     """
 
     logger.info(
-        f"User {ctx.author.name}({ctx.author.id}) getting sent message count for user {user.name}"
+        f"User {ctx.author.name}({ctx.author.id}) getting {type} message count for user {user.name}"
         f"({user.id})")
     if not database.checkUserExists(user.id):
         logger.info(f"User {user.name}({user.id}) does not exist")
         await ctx.respond(f"User <@{user.id}> does not exist!")
         return
-    count = database.getMessagesSent(user.id)
 
-    logger.debug(f"User {user.name}({user.id}) has sent {count} messages")
-    await ctx.respond(f"User <@{user.id}> has sent {count} messages!")
+    if type == "sent":
+        count = database.getMessagesSent(user.id)
+    elif type == "deleted":
+        count = database.getMessagesDeleted(user.id)
+    else:
+        await ctx.respond("Invalid message count type!", ephemeral=True)
+        return
+
+    logger.debug(f"User {user.name}({user.id}) has {type} {count} messages")
+    await ctx.respond(f"User <@{user.id}> has {type} {count} messages!")
 
 
 @bot.command(
     name="messagesleaderboard",
     description="Gets the messages leaderboard"
 )
+@option(name="type", description="The type of message count to get", choices=["sent", "deleted"])
 @option(name="count", description="The number of users to get")
-async def messagesLeaderboard(ctx, count: int = 10):
+async def messagesLeaderboard(ctx, type: str = "sent", count: int = 10):
     """
     The messages leaderboard command for the bot. Gets the top 10 users by message count.
     Returns the top 10 users by message count in a leaderboard embed.
 
     Args:
         ctx (ApplicationContext): The context of the command
+        type(str): The type of message count to get
+            "sent": The number of messages sent by the user
+            "deleted": The number of messages deleted by the user
         count(int): The number of users to get
     """
-    logger.info(f"User {ctx.author.name}({ctx.author.id}) getting sent messages leaderboard")
-    users = database.getTopMessagesSent(count)
+    logger.info(f"User {ctx.author.name}({ctx.author.id}) getting {type} messages leaderboard")
+    if type == "sent":
+        users = database.getTopMessagesSent(count)
+    elif type == "deleted":
+        users = database.getTopMessagesDeleted(count)
+    else:
+        await ctx.respond("Invalid message count type!", ephemeral=True)
+        return
 
     if len(users) == 0:
         logger.info(f"No users found")
         await ctx.respond("No users found!")
         return
 
-    embed = Embed(title=f"Top {count} Users by sent Messages", color=Color.blue())
+    embed = Embed(title=f"Top {count} Users by {type.capitalize()} Messages", color=Color.blue())
     for user in users:
         embed.add_field(name=f"{user[1]}", value=f"{user[2]} messages", inline=False)
 
@@ -483,12 +498,11 @@ async def auditUsernames(ctx: ApplicationContext) -> None:
 
     await ctx.respond(f"Auditing usernames for all users in all servers. This may take a while.")
 
-    # Get all users in the database and check that their usernames are up-to-date
+    # Get all users in the database and check that their usernames are up to date
     for user in database.users:
         if bot.get_user(user[0]) is not None:
             if user[1] != bot.get_user(user[0]).name:
                 database.setUsername(user[0], bot.get_user(user[0]).name)
-
 
 """
 Bot Events
@@ -510,8 +524,9 @@ async def on_message(message: Message) -> None:
 
     else:
         logger.info(
-            f"Message({message.id}) from {message.author.name}({message.author.id}) in {message.channel.name}"
-            f"({message.channel.id}) in {message.guild.name}({message.guild.id}): {message.content}")
+            f"Message({message.id}) from {message.author.name}({message.author.id}) in {message.channel.name}({message.channel.id})"
+            f"in {message.guild.name}({message.guild.id}): "
+            f"{message.content}")
 
     # Check if the user is in the database
     if not database.checkUserExists(message.author.id):
