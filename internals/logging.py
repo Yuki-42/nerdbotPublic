@@ -132,7 +132,7 @@ class ColourCodedFormatter(Formatter):
 
         try:
             record.levelname = f"{self.colourCoding[record.levelname]}{record.levelname}\033[0m"
-        except KeyError:  # Handles the case where the level name is not in the colour coding dictionary
+        except KeyError:  # Handles the case where the level _name is not in the colour coding dictionary
             pass
 
         return super().format(record)
@@ -257,10 +257,10 @@ def createLogger(
         colourCoding: dict[str, str] = None
 ) -> SuppressedLoggerAdapter:
     """
-    Creates a logger with the specified name, logging path, level, and formatter.
+    Creates a logger with the specified _name, logging path, level, and formatter.
 
     Args:
-        name (str): The name of the logger.
+        name (str): The _name of the logger.
         level (str): The level of the logger.
         databaseConnection (Connection): The connection to the database. Only required if the database handler is used.
         formatString (str): The format string for the logger.
@@ -296,7 +296,7 @@ def createLogger(
         case _:
             raise ValueError("Invalid level specified")
 
-    logger: Logger = getLogger(name)  # Sets the logger's name
+    logger: Logger = getLogger(name)  # Sets the logger's _name
     logger.setLevel(level)  # Sets the logger's level
 
     if logger.hasHandlers():  # This checks if the logger has already been created and if it has, it replaces the
@@ -332,6 +332,6 @@ def createLogger(
             handler.setFormatter(colourFormatter)
             logger.addHandler(handler)
 
-    # A logger adapter is used here to allow for the logger name to be included in the log messages. This is useful
+    # A logger adapter is used here to allow for the logger _name to be included in the log messages. This is useful
     # when multiple loggers are used in the same project.
     return SuppressedLoggerAdapter(logger, extra={"loggername": name})
