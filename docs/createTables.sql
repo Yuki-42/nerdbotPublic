@@ -58,6 +58,14 @@ CREATE TABLE IF NOT EXISTS public.banned_text (
     reason TEXT
 );
 
+CREATE TABLE IF NOT EXISTS public.logs (
+    id SERIAL PRIMARY KEY NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    level INTEGER NOT NULL,
+    module TEXT NOT NULL,
+    message TEXT NOT NULL
+);
+
 /* Add foreign keys */
 ALTER TABLE public.user_guilds ADD FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE public.user_guilds ADD FOREIGN KEY (guild_id) REFERENCES public.guilds(id) ON DELETE CASCADE ON UPDATE CASCADE;

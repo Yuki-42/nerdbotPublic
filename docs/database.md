@@ -113,3 +113,17 @@ This table will have the following columns:
 | added_by    | BIGINT    |                   | The ID of the user that added the banned text.                     | FOREIGN KEY | 123                 |
 | text        | TEXT      |                   | The text that is banned.                                           |             | bad word            |
 | reason      | TEXT      |                   | The reason the text is banned.                                     |             | Profanity           |
+
+### logs 
+
+The `logs` table will store logs of actions taken by the bot.
+
+This table will have the following columns:
+
+| Column Name | Data Type | Default           | Description                            | Extra       | Example             |
+|-------------|-----------|-------------------|----------------------------------------|-------------|---------------------|
+| id          | SERIAL    |                   | The ID of the row.                     | PRIMARY KEY | 1                   |
+| created_at  | TIMESTAMP | CURRENT_TIMESTAMP | The date and time the row was created. |             | 2021-01-01 12:00:00 |
+| level       | INTEGER   |                   | The level of the log.                  |             | 0                   |
+| module      | TEXT      |                   | The module that the log is from.       |             | Database            |
+| message     | TEXT      |                   | The message of the log.                |             | Connected to DB     |
