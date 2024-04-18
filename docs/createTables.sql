@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS public.banned_text (
     user_id BIGINT NOT NULL,
     added_by BIGINT NOT NULL,
     text TEXT NOT NULL,
-    reason TEXT NOT NULL
+    reason TEXT
 );
 
 /* Add foreign keys */
