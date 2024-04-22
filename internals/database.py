@@ -1,4 +1,90 @@
 """
+Database module for the server
+"""
+# Standard Library Imports
+from typing import List
+from multiprocessing import Process
+
+# Third Party Imports
+from psycopg2 import connect
+from psycopg2.extensions import connection as Connection
+from psycopg2.extras import RealDictCursor, RealDictRow
+
+# Local Imports
+from .config import Config
+from .datatypes import Guild
+from .logging import SuppressedLoggerAdapter, createLogger
+
+
+class Database:
+    """
+    Database module for the server.
+    """
+    # Type hints
+    _logger: SuppressedLoggerAdapter
+    _config: Config
+    _connection: Connection
+
+    def __init__(
+            self,
+            config: Config
+    ) -> None:
+        """
+        Initializes the Database object.
+
+        Args:
+            config (Config): The configuration object.
+
+        Returns:
+            None
+        """
+        self._config = config
+        self._connection = connect(
+            dbname=config.dbName,
+            user=config.dbUser,
+            password=config.dbPassword,
+            host=config.dbIp,
+            port=config.dbPort
+        )
+        # Create the logger
+        self._logger = createLogger(
+            "Database",
+            databaseConnection=self._connection
+        )
+
+    def __del__(self) -> None:
+        """
+        Closes the database connection.
+        """
+        self._connection.close()
+
+    """
+===============================================================================================================================================================
+        Properties
+===============================================================================================================================================================
+    """
+
+    @property
+    def connection(self) -> Connection:
+        """
+        The connection to the database.
+
+        Returns:
+            Connection: The connection to the database.
+        """
+        return self._connection
+
+    """
+===============================================================================================================================================================
+        Users
+===============================================================================================================================================================
+    """
+
+"""
+OLD CODE
+"""
+
+"""
 The database module for the bot. This module is used to store the database values for the bot.
 """
 # Standard Library Imports
