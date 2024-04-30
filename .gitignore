@@ -2,4 +2,4 @@
 .venv/
 Logs/
 bot/BotData/*
-database/pgdata/
+database/data/
