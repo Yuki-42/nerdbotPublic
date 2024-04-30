@@ -1,4 +1,5 @@
 .env
 .venv/
 Logs/
-BotData/*
+bot/BotData/*
+database/pgdata/
