@@ -14,6 +14,13 @@ services:
     depends_on:
        db:
          condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./bot
+          target: /app
+        - action: rebuild
+          path: ./bot/requirements.txt
   db:
     build:
       context: ./database

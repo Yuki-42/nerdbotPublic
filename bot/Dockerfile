@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     python -m pip install -r requirements.txt
 
 # Copy the source code into the container.
-COPY .. .
+COPY ./ /app/
 
 # Run the application.
 CMD python3 main.py
