@@ -11,7 +11,7 @@ from psycopg2.extensions import connection as Connection
 from psycopg2.extras import RealDictCursor, RealDictRow
 
 # Local Imports
-from .config import Config
+from .config import Config, Db as DbConfig
 from .datatypes import Guild
 from .logging import SuppressedLoggerAdapter, createLogger
 
@@ -22,7 +22,7 @@ class Database:
     """
     # Type hints
     _logger: SuppressedLoggerAdapter
-    _config: Config
+    _config: DbConfig
     _connection: Connection
 
     def __init__(
@@ -38,15 +38,15 @@ class Database:
         Returns:
             None
         """
-        self._config = config
+        self._config = config.db
         self._connection = connect(
-            dbname=config.dbName,
-            user=config.dbUser,
-            password=config.dbPassword,
-            host=config.dbIp,
-            port=config.dbPort
+            dbname=self._config.name,
+            user=self._config.user,
+            password=self._config.password,
+            host=self._config.ip,
+            port=self._config.port
         )
-        # Create the logger
+        # Create the _logger
         self._logger = createLogger(
             "Database",
             databaseConnection=self._connection
@@ -97,7 +97,7 @@ from discord import Member, User
 
 # Internal imports
 from .config import Config
-from .logging_ import createLogger, SuppressedLoggerAdapter
+from .logging import createLogger, SuppressedLoggerAdapter
 
 
 class Database:

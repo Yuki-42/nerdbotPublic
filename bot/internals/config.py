@@ -8,10 +8,48 @@ from os import environ
 
 # Third Party Imports
 from dotenv import load_dotenv as loadDotEnv
+from pydantic import BaseModel
 
 # Package Relative Imports
 from .logging import createLogger, SuppressedLoggerAdapter
-from .errors import InvalidStatusType
+
+
+class Db(BaseModel):
+    """
+    Model used to store the database connection details.
+    """
+    ip: str
+    port: int
+    name: str
+    user: str
+    password: str
+
+
+class Status(BaseModel):
+    """
+    Model used to store the status details.
+    """
+    status: str
+    statusType: str
+
+    def __str__(self) -> str:
+        """
+        Returns the status.
+
+        Returns:
+            str: The status.
+        """
+        return self.status
+
+
+class Bot(BaseModel):
+    """
+    Model used to store the bot details.
+    """
+    token: str
+    owonerId: str
+    debug: bool
+    status: Status
 
 
 class Config:
@@ -20,15 +58,10 @@ class Config:
     """
     # Type Hints
     _configFilePath: Path
-    logger: SuppressedLoggerAdapter
+    _logger: SuppressedLoggerAdapter
 
-    dbIp: str
-    dbPort: str
-    dbName: str
-    dbUser: str
-    dbPassword: str
-    debug: bool = False
-    owonerId: str
+    _db: Db
+    _debug: bool
 
     def __init__(
             self,
@@ -47,110 +80,66 @@ class Config:
         """
         self._configFilePath = configJson
 
-        self.logger = createLogger("Config")
-        self.logger.info("Initializing config")
+        self._logger = createLogger("Config")
+        self._logger.info("Initializing config")
 
         # Load the environment variables
         loadDotEnv(dotenv_path=envFile)
 
-        # Set the environment variables
-        self.dbIp = environ.get("DB_IP")
-        self.dbPort = environ.get("DB_PORT")
-        self.dbName = environ.get("DB_NAME")
-        self.dbUser = environ.get("DB_USER")
-        self.dbPassword = environ.get("DB_PASS")
-        self.debug = environ.get("DEBUG") == "True"
-        self.owonerId = environ.get("OWNER_ID")
+        # Load the environment variables
+        self._db = Db(
+            ip=environ.get("DB_IP"),
+            port=int(environ.get("DB_PORT")),
+            name=environ.get("DB_NAME"),
+            user=environ.get("DB_USER"),
+            password=environ.get("DB_PASSWORD")
+        )
+        self._debug = environ.get("BOT_DEBUG").lower() == "true"
 
     """
 ========================================================================================================================
-        Environment Variables
-========================================================================================================================
-    """
-    @property
-    def token(self) -> str:
-        """
-        Gets the bot token.
-
-        Returns:
-            str: The bot token.
-        """
-        if self.debug:
-            return environ.get("DEBUG_TOKEN")
-        return environ.get("TOKEN")
-
-    """
-========================================================================================================================
-        Json Config File
+        Properties
 ========================================================================================================================
     """
 
     @property
-    def status(self) -> str:
+    def db(self) -> Db:
         """
-        Gets the status.
+        The database connection details.
 
         Returns:
-            str: The status.
+            Db: The database connection details.
         """
-        return self.getJson("status")
-
-    @status.setter
-    def status(self, value: str) -> None:
-        """
-        Sets the status field in the config file to the provided value.
-
-        Args:
-            value (str): The value to set the status to.
-
-        Returns:
-            None
-        """
-        self.logger.debug(f"Setting status to '{value}'")
-        self.setValue("status", value)
+        return self._db
 
     @property
-    def statusType(self) -> str:
+    def bot(self) -> Bot:
         """
-        Gets the status type.
+        The bot details.
 
         Returns:
-            str: The status type.
+            Bot: The bot details.
         """
-        return self.getJson("statusType")
+        return Bot(
+            token=environ.get("BOT_TOKEN_DEBUG" if self._debug else "BOT_TOKEN"),
+            owonerId=environ.get("BOT_OWNER_ID"),
+            debug=self._debug,
+            status=Status(
+                status=self._get("status"),
+                statusType=self._get("statusType")
+            )
+        )
 
-    @statusType.setter
-    def statusType(self, value: str) -> None:
-        """
-        Sets the statusType.
+    """
+========================================================================================================================
+        Json Getters and Setters
+========================================================================================================================
+    """
 
-        Args:
-            value (str): The value to set the statusType to.
-
-        Raises:
-            InvalidStatusType: Raised when the statusType is invalid.
-
-        Returns:
-            None
-        """
-        self.logger.debug(f"Attempting to set statusType to {value}")
-        if value not in ["playing", "watching", "listening", "streaming"]:
-            self.logger.error(f"Invalid status type '{value}'")
-            raise InvalidStatusType(value)
-
-        self.setValue("statusType", value)
-
-    @property
-    def gifClassifiers(self) -> list[str]:
-        """
-        Gets the gif classifiers.
-
-        Returns:
-            list: The gif classifiers.
-        """
-        return self.getJson("gifClassifiers")
-
-    def getJson(self, key) -> str | int | bool | list[str | int]:
+    def _get(
+            self,
+            key: str
+    ) -> str | int | bool | list[str | int]:
         """
         Gets a value from the config file.
         Args:
@@ -163,19 +152,23 @@ class Config:
             configData: dict[str, str | int | bool | list[str]] = load(file)
 
         try:
-            self.logger.debug(f"Getting value for key '{key}'")
+            self._logger.debug(f"Getting value for key '{key}'")
         except AttributeError:
             pass
         return configData[key]
 
-    def setValue(self, key: str, value: str | int | bool | list[str | int]):
+    def _set(
+            self,
+            key: str,
+            value: str | int | bool | list[str | int]
+    ) -> None:
         """
         Writes a new value to the config file.
         Args:
             key(str): The key of the value to write.
             value: The value to write.
         """
-        self.logger.debug(f"Writing new value for key '{key}': {value}")
+        self._logger.debug(f"Writing new value for key '{key}': {value}")
         with open(self._configFilePath, 'r') as file:
             configData: dict[str, str | int | bool | list[str]] = load(file)
 
