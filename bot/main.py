@@ -12,9 +12,9 @@ from discord import Intents, Bot, ActivityType, Game, Activity, option, Forbidde
 from dotenv import load_dotenv as loadDotenv
 
 # Internal imports
-from bot.internals import Config
-from bot.internals.database import Database
-from bot.internals import createLogger, SuppressedLoggerAdapter
+from internals import Config
+from internals.database import Database
+from internals.logging import createLogger, SuppressedLoggerAdapter
 
 # Load .env
 loadDotenv()
